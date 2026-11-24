@@ -34,7 +34,10 @@ def api() -> str:
 def truth() -> gpd.GeoDataFrame:
     """The served data, read directly, as ground truth."""
     if not DATA_FILE.exists():
-        pytest.skip(f"{DATA_FILE} not found (set DATA_FILE)")
+        msg = f"{DATA_FILE} not found (set DATA_FILE)"
+        if os.environ.get("REQUIRE_API") == "1":
+            pytest.fail(msg)  # in CI a skip would look like a pass
+        pytest.skip(msg)
     return gpd.read_file(DATA_FILE, layer="wetlands")
 
 

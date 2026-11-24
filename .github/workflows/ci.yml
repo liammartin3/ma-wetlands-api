@@ -36,7 +36,7 @@ jobs:
       # Serve a copy: the SQLiteGPKG provider writes into the file it serves.
       - run: mkdir -p data/ci && cp tests/fixtures/ma_wetlands_sample.gpkg data/ci/ma_wetlands.gpkg
       - run: docker compose up -d --wait
-      - run: pytest -v tests/api
+      - run: pytest -v -rs tests/api   # -rs lists any skipped tests and why
       - if: failure()
         run: docker compose logs
       - if: always()
