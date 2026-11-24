@@ -142,13 +142,15 @@ def check_acres(
     gdf: gpd.GeoDataFrame,
     rel_tol: float,
     abs_tol: float,
-    boundary: BaseGeometry | None = None,
-    boundary_buffer_m: float = 0.0,
+    extent: BaseGeometry | None = None,
+    extent_buffer_m: float = 0.0,
 ) -> CheckResult:
     """ACRES must be positive and match geometry area within tolerance.
 
-    Mismatches are tolerated only for features that reach the state boundary
-    (NWI clips polygons to the state but keeps the unclipped ACRES value).
+    Run on the source geometry, before clipping to the state. Mismatches are
+    tolerated only for features on the edge of NWI's download extent: NWI clips
+    polygons to that extent (Massachusetts plus a border buffer) but keeps the
+    unclipped ACRES value.
     """
     acres = gdf["ACRES"]
     non_positive = int((acres <= 0).sum())
@@ -158,9 +160,8 @@ def check_acres(
     matches = (diff <= abs_tol) | (diff <= rel_tol * acres.abs())
     mismatch = ~matches
 
-    if boundary is not None:
-        interior = boundary.buffer(-boundary_buffer_m)
-        on_edge = ~gdf.geometry.within(interior)
+    if extent is not None:
+        on_edge = ~gdf.geometry.within(extent.buffer(-extent_buffer_m))
     else:
         on_edge = gpd.pd.Series(False, index=gdf.index)
 
@@ -176,18 +177,30 @@ def check_acres(
     return CheckResult(
         "acres",
         ok,
-        f"{int(mismatch.sum())} ACRES mismatches, all on the state boundary"
+        f"{int(mismatch.sum())} ACRES mismatches, all on the edge of the NWI download extent"
         if ok
-        else f"{non_positive} non-positive ACRES, {int(interior_mismatch.sum())} interior mismatches",
+        else f"{non_positive} non-positive ACRES, {int(interior_mismatch.sum())} mismatches away from the extent edge",
         {
             "relative_tolerance": rel_tol,
             "absolute_tolerance": abs_tol,
             "non_positive": non_positive,
             "mismatches_total": int(mismatch.sum()),
-            "mismatches_on_state_boundary": int(edge_mismatch.sum()),
+            "mismatches_on_extent_edge": int(edge_mismatch.sum()),
             "mismatches_interior": int(interior_mismatch.sum()),
             "interior_mismatch_examples": examples,
-            "acres_stored_total": float(acres.sum()),
-            "acres_geometry_total": float(calc.sum()),
         },
+    )
+
+
+def check_within_boundary(gdf: gpd.GeoDataFrame, boundary: BaseGeometry, tolerance_m: float) -> CheckResult:
+    """Every feature must lie inside the state boundary (an independent,
+    authoritative boundary, not the source's own extent layer). A small
+    tolerance absorbs floating-point noise along clipped edges."""
+    outside = ~gdf.geometry.within(boundary.buffer(tolerance_m))
+    n = int(outside.sum())
+    return CheckResult(
+        "within_state",
+        n == 0,
+        "all features inside the state boundary" if n == 0 else f"{n} features extend outside the state boundary",
+        {"outside": n, "tolerance_m": tolerance_m, "examples": gdf.loc[outside, "NWI_ID"].head(20).tolist()},
     )

@@ -19,6 +19,11 @@ pytest                             # unit + end-to-end tests (synthetic data)
 ```
 
 The build exits non-zero and writes no GeoPackage if any check fails.
+
+NWI's "Massachusetts" download also covers a strip of the neighboring states, so
+the build clips features to the Massachusetts state line from the U.S. Census
+TIGER/Line boundary (state waters included) and checks that every feature is
+inside it. The download script fetches that boundary too.
 Every build writes [`reports/qa_report.md`](reports/qa_report.md) and
 [`reports/qa_report.json`](reports/qa_report.json). Expected values and tolerances
 live in [`config/qa.yml`](config/qa.yml).
@@ -106,12 +111,12 @@ Measured with `python scripts/measure_latency.py` against the live server
 
 | Query | Median ms | Max ms |
 |---|---:|---:|
-| `landing_page` | 48 | 155 |
-| `items_default_page` | 1,254 | 1,438 |
-| `items_limit_1` | 1,340 | 1,536 |
-| `bbox_concord_100` | 3,061 | 3,316 |
-| `bbox_quabbin_100` | 1,809 | 1,954 |
-| `filter_lake_100` | 1,532 | 1,649 |
+| `landing_page` | 48 | 229 |
+| `items_default_page` | 1,114 | 1,249 |
+| `items_limit_1` | 1,129 | 1,231 |
+| `bbox_concord_100` | 2,752 | 2,832 |
+| `bbox_quabbin_100` | 1,606 | 1,758 |
+| `filter_lake_100` | 1,564 | 1,653 |
 
 Every items request takes over a second, even unfiltered ones. This is the known
 cost of the stock `SQLiteGPKG` provider, which scans the whole table rather than

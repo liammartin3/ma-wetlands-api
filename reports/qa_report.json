@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-11-23T21:41:29+00:00",
+  "built_at": "2026-11-24T16:35:34+00:00",
   "source": {
     "url": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MA_geopackage_wetlands.zip",
     "file": "data/raw/MA_geopackage_wetlands.gpkg",
@@ -18,22 +18,30 @@
     "input": 301032,
     "exact_duplicates_dropped": 0,
     "geometries_repaired": 0,
-    "output": 301032
+    "outside_state_dropped": 37115,
+    "clipped_at_state_line": 839,
+    "clip_slivers_dropped": 32,
+    "output": 263885
+  },
+  "state_boundary": {
+    "url": "https://www2.census.gov/geo/tiger/TIGER2025/STATE/tl_2025_us_state.zip",
+    "field": "STUSPS",
+    "value": "MA"
   },
   "output": {
     "path": "data/build/ma_wetlands.gpkg",
     "layer": "wetlands",
     "epsg": 4326,
-    "features": 301032,
+    "features": 263885,
     "spatial_index": true,
     "attribute_indexes": [
       "idx_wetlands_attribute",
       "idx_wetlands_nwi_id",
       "idx_wetlands_wetland_type"
     ],
-    "size_bytes": 502816768
+    "size_bytes": 438018048
   },
-  "build_seconds": 10.8,
+  "build_seconds": 34.5,
   "checks": [
     {
       "name": "crs",
@@ -106,17 +114,37 @@
     {
       "name": "acres",
       "passed": true,
-      "summary": "910 ACRES mismatches, all on the state boundary",
+      "summary": "910 ACRES mismatches, all on the edge of the NWI download extent",
       "details": {
         "relative_tolerance": 0.01,
         "absolute_tolerance": 0.01,
         "non_positive": 0,
         "mismatches_total": 910,
-        "mismatches_on_state_boundary": 910,
+        "mismatches_on_extent_edge": 910,
         "mismatches_interior": 0,
-        "interior_mismatch_examples": [],
-        "acres_stored_total": 4386787.961256732,
-        "acres_geometry_total": 2544198.700121668
+        "interior_mismatch_examples": []
+      }
+    },
+    {
+      "name": "within_state",
+      "passed": true,
+      "summary": "all features inside the state boundary",
+      "details": {
+        "outside": 0,
+        "tolerance_m": 1,
+        "examples": []
+      }
+    },
+    {
+      "name": "geometry_validity_after_clip",
+      "passed": true,
+      "summary": "all geometries valid polygons (0 repaired)",
+      "details": {
+        "repaired": 0,
+        "null": 0,
+        "empty": 0,
+        "invalid": 0,
+        "non_polygon": 0
       }
     }
   ],

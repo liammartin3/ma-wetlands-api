@@ -1,7 +1,7 @@
 """Unit tests for each data quality check and cleaning step."""
 import geopandas as gpd
 import pandas as pd
-from shapely.geometry import GeometryCollection, LineString, Polygon
+from shapely.geometry import GeometryCollection, LineString, Polygon, box
 
 from wetlands import clean, qa
 
@@ -127,7 +127,7 @@ def test_acres_boundary_mismatch_allowed(good_gdf, state):
     good_gdf.loc[2, "geometry"] = square(9_990, 5_000, 0.5).intersection(state)
     r = qa.check_acres(good_gdf, 0.01, 0.01, state, 50)
     assert r.passed
-    assert r.details["mismatches_on_state_boundary"] == 1
+    assert r.details["mismatches_on_extent_edge"] == 1
 
 
 def test_acres_requires_projected_crs(good_gdf):
@@ -135,3 +135,34 @@ def test_acres_requires_projected_crs(good_gdf):
 
     with pytest.raises(ValueError):
         qa.acres_from_geometry(good_gdf.to_crs(4326))
+
+
+# --- State boundary ------------------------------------------------------------
+def test_clip_drops_outside_and_cuts_straddling(good_gdf, state):
+    good_gdf.loc[0, "geometry"] = box(20_000, 20_000, 20_100, 20_100)  # entirely outside
+    good_gdf.loc[2, "geometry"] = box(9_900, 5_000, 10_100, 5_100)     # half outside
+    out, dropped, clipped, slivers = clean.clip_to_boundary(good_gdf, state)
+    assert (dropped, clipped, slivers) == (1, 1, 0)
+    assert list(out["NWI_ID"]) == ["b", "c"]
+    assert out.geometry[2].area == 100 * 100  # only the inside half remains
+    assert qa.check_within_boundary(out, state, 1).passed
+
+
+def test_clip_drops_features_only_touching_the_line(good_gdf, state):
+    good_gdf.loc[0, "geometry"] = box(10_000, 0, 10_100, 100)  # shares an edge only
+    out, dropped, _, _ = clean.clip_to_boundary(good_gdf, state)
+    assert dropped == 1 and "a" not in set(out["NWI_ID"])
+
+
+def test_clip_drops_slivers_but_keeps_small_source_features(good_gdf, state):
+    good_gdf.loc[0, "geometry"] = box(9_999.5, 100, 10_100, 101)  # clip leaves 0.5 m2
+    good_gdf.loc[1, "geometry"] = box(500, 500, 500.5, 501)       # 0.5 m2 in the source
+    out, dropped, clipped, slivers = clean.clip_to_boundary(good_gdf, state, min_clipped_area=1)
+    assert (dropped, clipped, slivers) == (0, 0, 1)
+    assert set(out["NWI_ID"]) == {"b", "c"}
+
+
+def test_within_boundary_fails_for_outside_feature(good_gdf, state):
+    good_gdf.loc[0, "geometry"] = box(20_000, 20_000, 20_100, 20_100)
+    r = qa.check_within_boundary(good_gdf, state, 1)
+    assert not r.passed and r.details["examples"] == ["a"]

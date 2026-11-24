@@ -36,7 +36,7 @@ def sha256(path: Path) -> str:
     return h.hexdigest()
 
 
-def run_checks(gdf: gpd.GeoDataFrame, cfg: dict, boundary, repaired: int) -> list[qa.CheckResult]:
+def run_checks(gdf: gpd.GeoDataFrame, cfg: dict, extent, repaired: int) -> list[qa.CheckResult]:
     f, a = cfg["fields"], cfg["acres"]
     results = [
         qa.check_crs(gdf, cfg["crs"]["expected_source_epsg"]),
@@ -52,9 +52,20 @@ def run_checks(gdf: gpd.GeoDataFrame, cfg: dict, boundary, repaired: int) -> lis
     ]
     if results[0].passed:  # area check needs the equal-area CRS
         results.append(
-            qa.check_acres(gdf, a["relative_tolerance"], a["absolute_tolerance"], boundary, a["boundary_buffer_m"])
+            qa.check_acres(gdf, a["relative_tolerance"], a["absolute_tolerance"], extent, a["extent_buffer_m"])
         )
     return results
+
+
+def load_state_boundary(cfg: dict, crs) -> shapely.Geometry:
+    sb = cfg["state_boundary"]
+    states = gpd.read_file(sb["path"], engine="pyogrio")
+    state = states[states[sb["field"]] == sb["value"]]
+    if len(state) != 1:
+        raise RuntimeError(f"expected 1 boundary with {sb['field']}={sb['value']}, found {len(state)}")
+    geom = state.to_crs(crs).union_all()
+    shapely.prepare(geom)
+    return geom
 
 
 def write_gpkg(gdf: gpd.GeoDataFrame, path: Path, layer: str) -> None:
@@ -117,9 +128,10 @@ def build(input_path: Path, cfg: dict) -> int:
     }
 
     gdf = gpd.read_file(input_path, layer=src["wetlands_layer"], engine="pyogrio")
-    boundary = gpd.read_file(input_path, layer=src["boundary_layer"], engine="pyogrio")
-    boundary = boundary.to_crs(gdf.crs).union_all() if gdf.crs else None
+    extent = gpd.read_file(input_path, layer=src["nwi_extent_layer"], engine="pyogrio")
+    extent = extent.to_crs(gdf.crs).union_all() if gdf.crs else None
     report["counts"]["input"] = len(gdf)
+    report["state_boundary"] = {k: cfg["state_boundary"][k] for k in ("url", "field", "value")}
 
     # Cleaning (each step reports what it changed)
     gdf = gdf.rename_geometry("geom")
@@ -128,7 +140,23 @@ def build(input_path: Path, cfg: dict) -> int:
     report["counts"]["exact_duplicates_dropped"] = n_dupes
     report["counts"]["geometries_repaired"] = n_repaired
 
-    checks = run_checks(gdf, cfg, boundary, n_repaired)
+    checks = run_checks(gdf, cfg, extent, n_repaired)
+
+    # Clip to the authoritative state line, then check the result.
+    if all(c.passed for c in checks):
+        state = load_state_boundary(cfg, gdf.crs)
+        gdf, n_outside, n_clipped, n_slivers = clean.clip_to_boundary(
+            gdf, state, cfg["state_boundary"]["min_clipped_area_m2"]
+        )
+        report["counts"]["outside_state_dropped"] = n_outside
+        report["counts"]["clipped_at_state_line"] = n_clipped
+        report["counts"]["clip_slivers_dropped"] = n_slivers
+        checks += [
+            qa.check_within_boundary(gdf, state, cfg["state_boundary"]["tolerance_m"]),
+            qa.check_geometries(gdf, n_repaired),
+        ]
+        checks[-1].name = "geometry_validity_after_clip"
+
     for c in checks:
         print(f"[{'PASS' if c.passed else 'FAIL'}] {c.name}: {c.summary}")
 

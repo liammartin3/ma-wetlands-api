@@ -49,3 +49,34 @@ def to_multipolygon(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     is_poly = out.geometry.geom_type == "Polygon"
     out.loc[is_poly, out.geometry.name] = [MultiPolygon([g]) for g in out.geometry[is_poly]]
     return out
+
+
+def clip_to_boundary(
+    gdf: gpd.GeoDataFrame, boundary: BaseGeometry, min_clipped_area: float = 0.0
+) -> tuple[gpd.GeoDataFrame, int, int, int]:
+    """Keep only the part of each feature inside the boundary.
+
+    Returns (clipped_gdf, dropped, clipped, slivers): `dropped` features had no
+    area inside the boundary; `clipped` features were cut at the boundary line;
+    `slivers` were cut down to less than `min_clipped_area` (CRS units squared)
+    and removed, since the wetland itself lies on the other side of the line.
+    Features that are small in the source data are never removed here.
+    """
+    inside = gdf.geometry.within(boundary)
+    touching = gdf.geometry.intersects(boundary)
+    edge = touching & ~inside
+
+    cut = shapely.intersection(gdf.geometry[edge].values, boundary)
+    cut = [_polygonal_part(g) for g in cut]  # drop stray lines/points from the cut
+
+    out = gdf.loc[touching].copy()
+    out.loc[edge, out.geometry.name] = cut
+    area = out.geometry.area
+    empty = out.geometry.is_empty | (area == 0)
+    sliver = edge.loc[out.index] & ~empty & (area < min_clipped_area)
+    out = out.loc[~empty & ~sliver].copy()
+
+    dropped = len(gdf) - len(out) - int(sliver.sum())
+    slivers = int(sliver.sum())
+    clipped = int(edge.sum()) - int((edge.loc[empty.index] & empty).sum()) - slivers
+    return out, dropped, clipped, slivers

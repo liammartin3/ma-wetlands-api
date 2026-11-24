@@ -42,6 +42,9 @@ def _markdown(p: dict[str, Any]) -> str:
         f"| Read from source | {c['input']:,} |",
         f"| Exact duplicates dropped | {c['exact_duplicates_dropped']:,} |",
         f"| Geometries repaired | {c['geometries_repaired']:,} |",
+        f"| Dropped: entirely outside Massachusetts | {c.get('outside_state_dropped', 0):,} |",
+        f"| Clipped at the Massachusetts state line | {c.get('clipped_at_state_line', 0):,} |",
+        f"| Dropped: clip left < 1 m² sliver | {c.get('clip_slivers_dropped', 0):,} |",
         f"| Written to GeoPackage | {c.get('output', 0):,} |",
         "",
         "## Checks",
@@ -69,14 +72,25 @@ def _markdown(p: dict[str, Any]) -> str:
             "",
             (
                 f"- Mismatches: {d['mismatches_total']:,} "
-                f"({d['mismatches_on_state_boundary']:,} on the state boundary, "
-                f"{d['mismatches_interior']:,} interior)"
+                f"({d['mismatches_on_extent_edge']:,} on the edge of the NWI download extent, "
+                f"{d['mismatches_interior']:,} elsewhere)"
             ),
-            f"- Sum of stored ACRES: {d['acres_stored_total']:,.1f}",
-            f"- Sum of geometry area (acres, EPSG:5070): {d['acres_geometry_total']:,.1f}",
             "",
-            "Boundary mismatches are expected: NWI clips polygons to the state line but keeps the",
-            "unclipped ACRES. The output keeps the published `ACRES` and adds `ACRES_GEOM`.",
+            "Checked on the source geometry, before clipping. The NWI Massachusetts download",
+            "covers Massachusetts plus a border strip of neighboring states; NWI clips polygons",
+            "at the edge of that area but keeps the unclipped ACRES, so mismatches there are",
+            "expected. The output keeps the published `ACRES`; `ACRES_GEOM` is the area of the",
+            "geometry as served (after clipping to the Massachusetts state line).",
+        ]
+
+    sb = p.get("state_boundary")
+    if sb:
+        lines += [
+            "",
+            "## State boundary",
+            "",
+            f"Features are clipped to {sb['field']}={sb['value']} from the U.S. Census Bureau",
+            f"TIGER/Line state boundaries (includes state waters): {sb['url']}",
         ]
 
     out = p.get("output")

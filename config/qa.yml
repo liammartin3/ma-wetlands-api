@@ -5,7 +5,22 @@
 source:
   url: https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MA_geopackage_wetlands.zip
   wetlands_layer: MA_Wetlands
-  boundary_layer: Massachusetts
+  # NWI's own extent layer. NOTE: it is Massachusetts PLUS a border buffer into
+  # neighboring states, so it is only used for the ACRES check, never as the
+  # state line.
+  nwi_extent_layer: Massachusetts
+
+# Authoritative state line (includes state waters, so coastal and marine
+# wetlands are kept). Output is clipped to this and checked against it.
+state_boundary:
+  url: https://www2.census.gov/geo/tiger/TIGER2025/STATE/tl_2025_us_state.zip
+  path: data/raw/census/tl_2025_us_state.zip
+  field: STUSPS
+  value: MA
+  tolerance_m: 1   # floating-point slack along clipped edges
+  # Drop pieces our clip leaves smaller than this (the wetland lies across the
+  # line). Features that are this small in NWI itself are kept.
+  min_clipped_area_m2: 1
 
 crs:
   # NWI ships a custom "NAD_1983_Albers" WKT; it is equivalent to EPSG:5070
@@ -34,9 +49,10 @@ acres:
   # A feature's ACRES "matches" if within EITHER tolerance of the geometry area.
   relative_tolerance: 0.01   # 1%
   absolute_tolerance: 0.01   # acres; avoids flagging rounding on tiny slivers
-  # Mismatches are allowed only for features within this distance of the state
-  # boundary (NWI clips polygons to the state but keeps the unclipped ACRES).
-  boundary_buffer_m: 50
+  # Mismatches are allowed only for features within this distance of the edge
+  # of NWI's download extent (NWI clips polygons there but keeps the unclipped
+  # ACRES). Checked on source geometry, before clipping to the state.
+  extent_buffer_m: 50
 
 output:
   path: data/build/ma_wetlands.gpkg

@@ -34,8 +34,8 @@ rsync -az -e "ssh $SSH_OPTS" caddy/Caddyfile "$HOST:/opt/wetlands/caddy/"
 echo "Copying GeoPackage (~500 MB; only changes are sent on later deploys) ..."
 rsync -az --partial --progress -e "ssh $SSH_OPTS" "$GPKG" "$HOST:/opt/wetlands/data/build/"
 
-echo "Starting services ..."
-ssh $SSH_OPTS "$HOST" "cd /opt/wetlands && DOMAIN=$DOMAIN docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait"
+echo "Starting services (recreated so pygeoapi reopens the new GeoPackage) ..."
+ssh $SSH_OPTS "$HOST" "cd /opt/wetlands && DOMAIN=$DOMAIN docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --force-recreate --wait"
 
 echo "Live: https://$DOMAIN/"
 echo "Test: API_URL=https://$DOMAIN pytest tests/api"

@@ -31,7 +31,9 @@ def test_build_success(tmp_path, good_gdf, state, cfg):
 
     report = json.loads((Path(cfg["output"]["report_dir"]) / "qa_report.json").read_text())
     assert report["passed"] is True
-    assert report["counts"] == {"input": 3, "exact_duplicates_dropped": 0, "geometries_repaired": 0, "output": 3}
+    assert report["counts"] == {"input": 3, "exact_duplicates_dropped": 0, "geometries_repaired": 0,
+                                "outside_state_dropped": 0, "clipped_at_state_line": 0,
+                                "clip_slivers_dropped": 0, "output": 3}
     assert report["output"]["spatial_index"] is True
 
 
@@ -49,3 +51,22 @@ def test_build_fails_on_bad_data(tmp_path, good_gdf, state, cfg):
 def test_build_fails_on_wrong_crs(tmp_path, good_gdf, state, cfg):
     src = _write_source(tmp_path / "src.gpkg", good_gdf.to_crs(3857), gpd.GeoSeries([state], crs=5070).to_crs(3857)[0])
     assert build(src, cfg) == 1
+
+
+def test_build_clips_to_state(tmp_path, good_gdf, state, cfg):
+    """A feature in the neighbouring 'RI' polygon is dropped; one crossing the
+    line is clipped; the NWI extent layer covers both (like the real download)."""
+    from shapely.geometry import box
+
+    good_gdf.loc[0, "geometry"] = box(1_000, -2_000, 1_063.6, -1_936.4)  # in "RI"
+    good_gdf.loc[2, "geometry"] = box(5_000, -40, 5_045, 5)              # crosses y=0
+    good_gdf.loc[2, "ACRES"] = good_gdf.geometry[2].area / 4046.8564224
+    extent = box(-3_000, -8_000, 13_000, 13_000)                        # buffered, like NWI's
+    src = _write_source(tmp_path / "src.gpkg", good_gdf, extent)
+    assert build(src, cfg) == 0
+
+    report = json.loads((Path(cfg["output"]["report_dir"]) / "qa_report.json").read_text())
+    assert report["counts"]["outside_state_dropped"] == 1
+    assert report["counts"]["clipped_at_state_line"] == 1
+    assert report["counts"]["output"] == 2
+    assert {c["name"]: c["passed"] for c in report["checks"]}["within_state"] is True

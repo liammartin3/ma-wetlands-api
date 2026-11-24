@@ -37,9 +37,13 @@ def state():
 
 
 @pytest.fixture
-def cfg(tmp_path):
+def cfg(tmp_path, state):
+    states = tmp_path / "states.gpkg"
+    gpd.GeoDataFrame({"STUSPS": ["MA", "RI"]}, geometry=[state, box(0, -5_000, 10_000, 0)], crs=EPSG).to_file(states)
     return {
-        "source": {"url": "test://", "wetlands_layer": "MA_Wetlands", "boundary_layer": "Massachusetts"},
+        "source": {"url": "test://", "wetlands_layer": "MA_Wetlands", "nwi_extent_layer": "Massachusetts"},
+        "state_boundary": {"url": "test://", "path": str(states), "field": "STUSPS", "value": "MA", "tolerance_m": 1,
+                           "min_clipped_area_m2": 1},
         "crs": {"expected_source_epsg": EPSG, "output_epsg": 4326},
         "fields": {
             "required": ["ATTRIBUTE", "WETLAND_TYPE", "ACRES", "NWI_ID"],
@@ -51,7 +55,7 @@ def cfg(tmp_path):
                 "Freshwater Pond", "Lake", "Other", "Riverine",
             ],
         },
-        "acres": {"relative_tolerance": 0.01, "absolute_tolerance": 0.01, "boundary_buffer_m": 50},
+        "acres": {"relative_tolerance": 0.01, "absolute_tolerance": 0.01, "extent_buffer_m": 50},
         "output": {
             "path": str(tmp_path / "out" / "wetlands.gpkg"),
             "layer": "wetlands",

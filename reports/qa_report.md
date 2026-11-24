@@ -1,7 +1,7 @@
 # Data quality report
 
 **Status: PASSED**  
-Built: 2026-11-23T21:41:29+00:00  
+Built: 2026-11-24T16:35:34+00:00  
 Source: https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MA_geopackage_wetlands.zip  
 Input file: `data/raw/MA_geopackage_wetlands.gpkg` (layer `MA_Wetlands`)  
 Input file SHA-256: `059a0884047262e4c900b93517b04e97013dc403b42216481b8f84d8c557b2d7`
@@ -13,7 +13,10 @@ Input file SHA-256: `059a0884047262e4c900b93517b04e97013dc403b42216481b8f84d8c55
 | Read from source | 301,032 |
 | Exact duplicates dropped | 0 |
 | Geometries repaired | 0 |
-| Written to GeoPackage | 301,032 |
+| Dropped: entirely outside Massachusetts | 37,115 |
+| Clipped at the Massachusetts state line | 839 |
+| Dropped: clip left < 1 m² sliver | 32 |
+| Written to GeoPackage | 263,885 |
 
 ## Checks
 
@@ -25,7 +28,9 @@ Input file SHA-256: `059a0884047262e4c900b93517b04e97013dc403b42216481b8f84d8c55
 | wetland_types | pass | all WETLAND_TYPE values in expected set |
 | geometry_validity | pass | all geometries valid polygons (0 repaired) |
 | duplicates | pass | no duplicate IDs or geometries |
-| acres | pass | 910 ACRES mismatches, all on the state boundary |
+| acres | pass | 910 ACRES mismatches, all on the edge of the NWI download extent |
+| within_state | pass | all features inside the state boundary |
+| geometry_validity_after_clip | pass | all geometries valid polygons (0 repaired) |
 
 ## Features by wetland type
 
@@ -44,19 +49,25 @@ Input file SHA-256: `059a0884047262e4c900b93517b04e97013dc403b42216481b8f84d8c55
 
 Tolerance: 1% or 0.01 acres, whichever is larger.
 
-- Mismatches: 910 (910 on the state boundary, 0 interior)
-- Sum of stored ACRES: 4,386,788.0
-- Sum of geometry area (acres, EPSG:5070): 2,544,198.7
+- Mismatches: 910 (910 on the edge of the NWI download extent, 0 elsewhere)
 
-Boundary mismatches are expected: NWI clips polygons to the state line but keeps the
-unclipped ACRES. The output keeps the published `ACRES` and adds `ACRES_GEOM`.
+Checked on the source geometry, before clipping. The NWI Massachusetts download
+covers Massachusetts plus a border strip of neighboring states; NWI clips polygons
+at the edge of that area but keeps the unclipped ACRES, so mismatches there are
+expected. The output keeps the published `ACRES`; `ACRES_GEOM` is the area of the
+geometry as served (after clipping to the Massachusetts state line).
+
+## State boundary
+
+Features are clipped to STUSPS=MA from the U.S. Census Bureau
+TIGER/Line state boundaries (includes state waters): https://www2.census.gov/geo/tiger/TIGER2025/STATE/tl_2025_us_state.zip
 
 ## Output
 
 - File: `data/build/ma_wetlands.gpkg` (layer `wetlands`, EPSG:4326)
 - Spatial index (R-tree) present: True
 - Attribute indexes: idx_wetlands_attribute, idx_wetlands_nwi_id, idx_wetlands_wetland_type
-- Size: 502,816,768 bytes
+- Size: 438,018,048 bytes
 
 ## Environment
 
