@@ -1,0 +1,24 @@
+# Data (large; reproducible via scripts/download.sh + wetlands.build)
+data/
+!tests/fixtures/*.gpkg
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Secrets / local
+.env
+*.pem
+.DS_Store
+*.egg-info/

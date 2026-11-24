@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ma-wetlands-api"
+version = "0.1.0"
+description = "OGC API - Features service for NWI wetlands in Massachusetts, with data quality checks"
+requires-python = ">=3.11"
+# Pinned to the versions the build was verified with (see reports/qa_report.md).
+dependencies = [
+    "geopandas==1.2.0",
+    "shapely==2.2.0",
+    "pyogrio==0.13.0",
+    "pyproj==3.8.0",
+    "pyyaml>=6",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[tool.setuptools]
+packages = ["wetlands"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120

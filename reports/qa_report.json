@@ -1,0 +1,124 @@
+{
+  "built_at": "2026-11-23T21:41:29+00:00",
+  "source": {
+    "url": "https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MA_geopackage_wetlands.zip",
+    "file": "data/raw/MA_geopackage_wetlands.gpkg",
+    "sha256": "059a0884047262e4c900b93517b04e97013dc403b42216481b8f84d8c557b2d7",
+    "layer": "MA_Wetlands"
+  },
+  "versions": {
+    "python": "3.12.14",
+    "geopandas": "1.2.0",
+    "shapely": "2.2.0",
+    "pyogrio": "0.13.0",
+    "gdal": "3.12.4",
+    "pyproj": "3.8.0"
+  },
+  "counts": {
+    "input": 301032,
+    "exact_duplicates_dropped": 0,
+    "geometries_repaired": 0,
+    "output": 301032
+  },
+  "output": {
+    "path": "data/build/ma_wetlands.gpkg",
+    "layer": "wetlands",
+    "epsg": 4326,
+    "features": 301032,
+    "spatial_index": true,
+    "attribute_indexes": [
+      "idx_wetlands_attribute",
+      "idx_wetlands_nwi_id",
+      "idx_wetlands_wetland_type"
+    ],
+    "size_bytes": 502816768
+  },
+  "build_seconds": 10.8,
+  "checks": [
+    {
+      "name": "crs",
+      "passed": true,
+      "summary": "CRS equivalent to EPSG:5070",
+      "details": {
+        "expected": "EPSG:5070",
+        "found": "NAD_1983_Albers"
+      }
+    },
+    {
+      "name": "required_fields",
+      "passed": true,
+      "summary": "all 4 required fields present and non-null",
+      "details": {
+        "missing": [],
+        "null_counts": {}
+      }
+    },
+    {
+      "name": "attribute_codes",
+      "passed": true,
+      "summary": "0 ATTRIBUTE codes do not match '^[MERLP]'",
+      "details": {
+        "pattern": "^[MERLP]",
+        "distinct_codes": 749,
+        "invalid_count": 0,
+        "invalid_examples": []
+      }
+    },
+    {
+      "name": "wetland_types",
+      "passed": true,
+      "summary": "all WETLAND_TYPE values in expected set",
+      "details": {
+        "counts": {
+          "Freshwater Forested/Shrub Wetland": 146154,
+          "Riverine": 71967,
+          "Freshwater Emergent Wetland": 43860,
+          "Freshwater Pond": 25411,
+          "Estuarine and Marine Wetland": 8738,
+          "Lake": 2362,
+          "Estuarine and Marine Deepwater": 1353,
+          "Other": 1187
+        },
+        "unexpected": {}
+      }
+    },
+    {
+      "name": "geometry_validity",
+      "passed": true,
+      "summary": "all geometries valid polygons (0 repaired)",
+      "details": {
+        "repaired": 0,
+        "null": 0,
+        "empty": 0,
+        "invalid": 0,
+        "non_polygon": 0
+      }
+    },
+    {
+      "name": "duplicates",
+      "passed": true,
+      "summary": "no duplicate IDs or geometries",
+      "details": {
+        "duplicate_ids": 0,
+        "duplicate_geometries": 0
+      }
+    },
+    {
+      "name": "acres",
+      "passed": true,
+      "summary": "910 ACRES mismatches, all on the state boundary",
+      "details": {
+        "relative_tolerance": 0.01,
+        "absolute_tolerance": 0.01,
+        "non_positive": 0,
+        "mismatches_total": 910,
+        "mismatches_on_state_boundary": 910,
+        "mismatches_interior": 0,
+        "interior_mismatch_examples": [],
+        "acres_stored_total": 4386787.961256732,
+        "acres_geometry_total": 2544198.700121668
+      }
+    }
+  ],
+  "passed": true
+}

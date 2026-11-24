@@ -1,0 +1,44 @@
+# Data quality expectations for the NWI Massachusetts build.
+# Values here were chosen after profiling the 2026-10-09 NWI release;
+# see README "Data quality checks" for the reasoning.
+
+source:
+  url: https://documentst.ecosphere.fws.gov/wetlands/data/State-Downloads/MA_geopackage_wetlands.zip
+  wetlands_layer: MA_Wetlands
+  boundary_layer: Massachusetts
+
+crs:
+  # NWI ships a custom "NAD_1983_Albers" WKT; it is equivalent to EPSG:5070
+  # (NAD83 / CONUS Albers, an equal-area projection used for the ACRES check).
+  expected_source_epsg: 5070
+  # OGC API - Features defaults to CRS84 (lon/lat), so store output in 4326
+  # and avoid reprojecting on every request.
+  output_epsg: 4326
+
+fields:
+  required: [ATTRIBUTE, WETLAND_TYPE, ACRES, NWI_ID]
+  id_field: NWI_ID
+  # Cowardin systems: Marine, Estuarine, Riverine, Lacustrine, Palustrine
+  attribute_pattern: '^[MERLP]'
+  wetland_types:
+    - Estuarine and Marine Deepwater
+    - Estuarine and Marine Wetland
+    - Freshwater Emergent Wetland
+    - Freshwater Forested/Shrub Wetland
+    - Freshwater Pond
+    - Lake
+    - Other
+    - Riverine
+
+acres:
+  # A feature's ACRES "matches" if within EITHER tolerance of the geometry area.
+  relative_tolerance: 0.01   # 1%
+  absolute_tolerance: 0.01   # acres; avoids flagging rounding on tiny slivers
+  # Mismatches are allowed only for features within this distance of the state
+  # boundary (NWI clips polygons to the state but keeps the unclipped ACRES).
+  boundary_buffer_m: 50
+
+output:
+  path: data/build/ma_wetlands.gpkg
+  layer: wetlands
+  report_dir: reports
