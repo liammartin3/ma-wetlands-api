@@ -1,0 +1,26 @@
+# Production additions, layered on docker-compose.yml:
+#   DOMAIN=example.org docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+services:
+  pygeoapi:
+    environment:
+      PYGEOAPI_SERVER_URL: https://${DOMAIN:?set DOMAIN}
+
+  caddy:
+    image: caddy:2.11.9   # pinned
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data       # certificates; keep across restarts to avoid re-issuing
+      - caddy_config:/config
+    depends_on:
+      pygeoapi:
+        condition: service_healthy
+
+volumes:
+  caddy_data:
+  caddy_config:

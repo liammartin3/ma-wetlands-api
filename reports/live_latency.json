@@ -1,0 +1,31 @@
+{
+  "measured_at": "2026-11-24T16:16:52+00:00",
+  "base": "https://54-211-175-202.sslip.io",
+  "repeats": 5,
+  "results": {
+    "landing_page": {
+      "median_ms": 48,
+      "max_ms": 155
+    },
+    "items_default_page": {
+      "median_ms": 1254,
+      "max_ms": 1438
+    },
+    "items_limit_1": {
+      "median_ms": 1340,
+      "max_ms": 1536
+    },
+    "bbox_concord_100": {
+      "median_ms": 3061,
+      "max_ms": 3316
+    },
+    "bbox_quabbin_100": {
+      "median_ms": 1809,
+      "max_ms": 1954
+    },
+    "filter_lake_100": {
+      "median_ms": 1532,
+      "max_ms": 1649
+    }
+  }
+}

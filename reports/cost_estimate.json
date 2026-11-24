@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-11-24T14:57:51+00:00",
+  "region": "us-east-1",
+  "hours_per_month": 744,
+  "sources": {
+    "lightsail": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonLightsail/20261113180218/us-east-1/index.json",
+    "ec2": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/20261124134910/us-east-1/index.csv",
+    "vpc_public_ipv4": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonVPC/20261123222247/us-east-1/index.json"
+  },
+  "unit_prices": {
+    "ebs_gp3_usd_per_gb_month": 0.08,
+    "public_ipv4_usd_per_hour": 0.005
+  },
+  "lightsail": {
+    "USE1-BundleUsage:1GB": {
+      "spec": "1 GB RAM, 2 vCPU, 40 GB SSD, 2 TB transfer",
+      "usd_per_hour": 0.0094,
+      "usd_per_month": 6.99
+    },
+    "USE1-BundleUsage:2GB": {
+      "spec": "2 GB RAM, 2 vCPU, 60 GB SSD, 3 TB transfer",
+      "usd_per_hour": 0.01612,
+      "usd_per_month": 11.99
+    }
+  },
+  "ec2": {
+    "t4g.micro": {
+      "spec": "1 GiB RAM, 2 vCPU + 20 GB gp3 + public IPv4",
+      "compute_usd": 6.25,
+      "ebs_usd": 1.6,
+      "public_ipv4_usd": 3.72,
+      "usd_per_month": 11.57
+    },
+    "t4g.small": {
+      "spec": "2 GiB RAM, 2 vCPU + 20 GB gp3 + public IPv4",
+      "compute_usd": 12.5,
+      "ebs_usd": 1.6,
+      "public_ipv4_usd": 3.72,
+      "usd_per_month": 17.82
+    }
+  },
+  "excluded": [
+    "data transfer beyond bundle/free allowance",
+    "domain + DNS",
+    "AWS Budgets",
+    "snapshots",
+    "taxes",
+    "free-tier credits"
+  ]
+}

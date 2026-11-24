@@ -22,3 +22,4 @@ crash.log
 *.pem
 .DS_Store
 *.egg-info/
+tfplan
