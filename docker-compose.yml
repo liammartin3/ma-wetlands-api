@@ -1,0 +1,23 @@
+# Local run:   docker compose up -d   ->  http://localhost:5050  (5050 because macOS AirPlay uses 5000)
+# Requires data/build/ma_wetlands.gpkg (python -m wetlands.build).
+services:
+  pygeoapi:
+    image: geopython/pygeoapi:0.24.0   # pinned: tested version
+    container_name: wetlands-api
+    restart: unless-stopped
+    ports:
+      - "${API_PORT:-5050}:80"
+    environment:
+      PYGEOAPI_SERVER_URL: ${PYGEOAPI_SERVER_URL:-http://localhost:5050}
+    volumes:
+      - ./pygeoapi/config.yml:/pygeoapi/local.config.yml:ro
+      # Not read-only: the SQLiteGPKG provider (SpatiaLite AutoGPKGStart)
+      # must write virtual-table definitions into the GeoPackage.
+      - ${DATA_DIR:-./data/build}:/data
+    healthcheck:
+      # The image has no curl/wget, so use its Python to hit /conformance.
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost/conformance?f=json', timeout=5)"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s

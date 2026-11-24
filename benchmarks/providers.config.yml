@@ -1,0 +1,77 @@
+# Experiment config: the same GeoPackage served by three provider setups, so
+# benchmarks/compare_providers.py can compare speed and correctness.
+# Not used in production (see pygeoapi/config.yml).
+server:
+  bind: {host: 0.0.0.0, port: 80}
+  url: ${PYGEOAPI_SERVER_URL:-http://localhost:5000}
+  mimetype: application/json; charset=UTF-8
+  encoding: utf-8
+  language: en-US
+  cors: true
+  pretty_print: false
+  limits: {default_items: 10, max_items: 1000}
+  map:
+    url: https://tile.openstreetmap.org/{z}/{x}/{y}.png
+    attribution: '&copy; OpenStreetMap contributors'
+
+logging: {level: ERROR}
+
+metadata:
+  identification:
+    title: Provider comparison
+    description: Experiment
+    keywords: [test]
+    keywords_type: theme
+    terms_of_service: https://creativecommons.org/licenses/by/4.0/
+    url: https://example.org
+  license: {name: CC0, url: https://creativecommons.org/publicdomain/zero/1.0/}
+  provider: {name: test, url: https://example.org}
+  contact: {name: test, email: test@example.org}
+
+resources:
+  ogr:
+    type: collection
+    title: OGR provider, paging off
+    description: OGR / GPKG driver
+    keywords: [wetlands]
+    extents:
+      spatial: {bbox: [-73.6, 41.1, -69.8, 42.9], crs: http://www.opengis.net/def/crs/OGC/1.3/CRS84}
+    providers:
+      - type: feature
+        name: OGR
+        data:
+          source_type: GPKG
+          source: /data/ma_wetlands.gpkg
+        id_field: NWI_ID
+        layer: wetlands
+
+  ogr_paging:
+    type: collection
+    title: OGR provider, paging on
+    description: OGR / GPKG driver with source_capabilities.paging
+    keywords: [wetlands]
+    extents:
+      spatial: {bbox: [-73.6, 41.1, -69.8, 42.9], crs: http://www.opengis.net/def/crs/OGC/1.3/CRS84}
+    providers:
+      - type: feature
+        name: OGR
+        data:
+          source_type: GPKG
+          source: /data/ma_wetlands.gpkg
+          source_capabilities: {paging: true}
+        id_field: NWI_ID
+        layer: wetlands
+
+  sqlite:
+    type: collection
+    title: SQLiteGPKG provider
+    description: sqlite3 + SpatiaLite
+    keywords: [wetlands]
+    extents:
+      spatial: {bbox: [-73.6, 41.1, -69.8, 42.9], crs: http://www.opengis.net/def/crs/OGC/1.3/CRS84}
+    providers:
+      - type: feature
+        name: SQLiteGPKG
+        data: /data-rw/ma_wetlands.gpkg  # SQLiteGPKG needs a writable file (SpatiaLite AutoGPKGStart)
+        id_field: NWI_ID
+        table: wetlands

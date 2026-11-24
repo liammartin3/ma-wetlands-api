@@ -1,0 +1,61 @@
+{
+  "bbox_small": [
+    -71.4,
+    42.42,
+    -71.3,
+    42.5
+  ],
+  "bbox_large": [
+    -72.4,
+    42.25,
+    -72.2,
+    42.45
+  ],
+  "page_size": 50,
+  "repeats": 5,
+  "note": "Latencies measured on the developer machine via Docker; compare relatively, not absolutely.",
+  "results": {
+    "ogr": {
+      "bbox_page1_all_correct": true,
+      "bbox_paged_count": 1350,
+      "bbox_truth_count": 1221,
+      "bbox_paged_unique": 50,
+      "bbox_paged_wrong": 0,
+      "bbox_paging_correct": false,
+      "offset_changes_page": false,
+      "attribute_filter_correct": true,
+      "ms_bbox_small": 38.4,
+      "ms_bbox_large": 43.9,
+      "ms_attribute_filter": 33.1,
+      "ms_bbox_page_20": 25.9
+    },
+    "ogr_paging": {
+      "bbox_page1_all_correct": true,
+      "bbox_paged_count": 1221,
+      "bbox_truth_count": 1221,
+      "bbox_paged_unique": 1173,
+      "bbox_paged_wrong": 0,
+      "bbox_paging_correct": false,
+      "offset_changes_page": true,
+      "attribute_filter_correct": true,
+      "ms_bbox_small": 36.6,
+      "ms_bbox_large": 42.7,
+      "ms_attribute_filter": 34.2,
+      "ms_bbox_page_20": 24.7
+    },
+    "sqlite": {
+      "bbox_page1_all_correct": true,
+      "bbox_paged_count": 1221,
+      "bbox_truth_count": 1221,
+      "bbox_paged_unique": 1221,
+      "bbox_paged_wrong": 0,
+      "bbox_paging_correct": true,
+      "offset_changes_page": true,
+      "attribute_filter_correct": true,
+      "ms_bbox_small": 826.4,
+      "ms_bbox_large": 536.4,
+      "ms_attribute_filter": 413.2,
+      "ms_bbox_page_20": 862.5
+    }
+  }
+}
