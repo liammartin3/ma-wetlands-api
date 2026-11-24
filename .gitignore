@@ -23,3 +23,6 @@ crash.log
 .DS_Store
 *.egg-info/
 tfplan
+
+# Local notes for Claude Code (contains private account details)
+CLAUDE.md
